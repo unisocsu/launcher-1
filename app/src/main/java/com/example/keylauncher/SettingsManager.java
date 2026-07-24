@@ -3,84 +3,80 @@ package com.example.keylauncher;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class SettingsManager {
 
-    private static final String PREFS = "keylauncher_settings";
+    private static final String PREF_NAME = "keylauncher";
 
     private final SharedPreferences prefs;
 
     public SettingsManager(Context context) {
-        prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
 
     /*
-     * ==========================
-     * Grid
-     * ==========================
+     * ===================================
+     * Keys
+     * ===================================
      */
 
-    public int getGridColumns() {
-        return prefs.getInt("grid_columns", 4);
-    }
+    public static final String GRID_COLUMNS = "grid_columns";
+    public static final String ICON_SIZE = "icon_size";
+    public static final String TEXT_SIZE = "text_size";
+    public static final String SHOW_HIDDEN = "show_hidden";
+    public static final String DESKTOP_LOCKED = "desktop_locked";
 
-    public void setGridColumns(int value) {
-        prefs.edit().putInt("grid_columns", value).apply();
-    }
+    public static final String HIDDEN_APPS = "hidden_apps";
+    public static final String CUSTOM_TITLES = "custom_titles";
+    public static final String DESKTOP_LAYOUT = "desktop_layout";
+    public static final String WIDGET_LAYOUT = "widget_layout";
 
     /*
-     * ==========================
-     * Hidden Apps
-     * ==========================
+     * ===================================
+     * Generic API
+     * ===================================
      */
 
-    public boolean isShowHiddenApps() {
-        return prefs.getBoolean("show_hidden_apps", false);
+    public void putBoolean(String key, boolean value) {
+        prefs.edit().putBoolean(key, value).apply();
     }
 
-    public void setShowHiddenApps(boolean value) {
-        prefs.edit().putBoolean("show_hidden_apps", value).apply();
+    public boolean getBoolean(String key, boolean def) {
+        return prefs.getBoolean(key, def);
     }
 
-    /*
-     * ==========================
-     * Desktop Lock
-     * ==========================
-     */
-
-    public boolean isDesktopLocked() {
-        return prefs.getBoolean("desktop_locked", false);
+    public void putInt(String key, int value) {
+        prefs.edit().putInt(key, value).apply();
     }
 
-    public void setDesktopLocked(boolean value) {
-        prefs.edit().putBoolean("desktop_locked", value).apply();
+    public int getInt(String key, int def) {
+        return prefs.getInt(key, def);
     }
 
-    /*
-     * ==========================
-     * Icon Size
-     * ==========================
-     */
-
-    public int getIconSize() {
-        return prefs.getInt("icon_size", 56);
+    public void putString(String key, String value) {
+        prefs.edit().putString(key, value).apply();
     }
 
-    public void setIconSize(int value) {
-        prefs.edit().putInt("icon_size", value).apply();
+    public String getString(String key, String def) {
+        return prefs.getString(key, def);
     }
 
-    /*
-     * ==========================
-     * Text Size
-     * ==========================
-     */
-
-    public int getTextSize() {
-        return prefs.getInt("text_size", 12);
+    public void putStringSet(String key, Set<String> value) {
+        prefs.edit().putStringSet(key, value).apply();
     }
 
-    public void setTextSize(int value) {
-        prefs.edit().putInt("text_size", value).apply();
+    public Set<String> getStringSet(String key) {
+        Set<String> value = prefs.getStringSet(key, null);
+        return value == null ? new HashSet<>() : new HashSet<>(value);
     }
 
+    public void remove(String key) {
+        prefs.edit().remove(key).apply();
+    }
+
+    public void clearAll() {
+        prefs.edit().clear().apply();
+    }
 }
