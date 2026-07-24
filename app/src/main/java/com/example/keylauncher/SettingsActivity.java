@@ -1,96 +1,102 @@
 package com.example.keylauncher;
 
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    private SettingsManager settingsManager;
+    private RecyclerView recyclerView;
+    private Toolbar toolbar;
 
-    private ListView listView;
+    private SettingsManager settings;
 
-    private final String[] items = {
+    private SettingsAdapter adapter;
 
-            "מסך הבית",
-
-            "ווידג'טים",
-
-            "אפליקציות",
-
-            "תיקיות",
-
-            "מקשים",
-
-            "עכבר",
-
-            "גיבוי ושחזור",
-
-            "אודות"
-
-    };
+    private final List<SettingItem> items = new ArrayList<>();
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        settingsManager = new SettingsManager(this);
+        setContentView(R.layout.activity_settings);
 
-        listView = new ListView(this);
+        settings = new SettingsManager(this);
 
-        listView.setDividerHeight(1);
+        toolbar = findViewById(R.id.toolbar);
 
-        listView.setAdapter(new ArrayAdapter<>(
+        setSupportActionBar(toolbar);
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
+        recyclerView = findViewById(R.id.settingsRecycler);
+
+        recyclerView.setLayoutManager(
+                new LinearLayoutManager(this)
+        );
+
+        createItems();
+
+        adapter = new SettingsAdapter(
                 this,
-                android.R.layout.simple_list_item_1,
-                items));
+                items,
+                settings
+        );
 
-        setContentView(listView);
+        recyclerView.setAdapter(adapter);
+    }
 
-        setTitle("הגדרות");
+    private void createItems() {
 
-        listView.setOnItemClickListener((parent, view, position, id) -> {
+        items.clear();
 
-            switch (position) {
+        items.add(new SettingItem(
+                "מסך הבית",
+                "רשת, אייקונים וטקסט"));
 
-                case 0:
-                    // מסך הבית
-                    break;
+        items.add(new SettingItem(
+                "ווידג'טים",
+                "ניהול והוספה"));
 
-                case 1:
-                    // ווידג'טים
-                    break;
+        items.add(new SettingItem(
+                "אפליקציות",
+                "הסתרה ושמות"));
 
-                case 2:
-                    // אפליקציות
-                    break;
+        items.add(new SettingItem(
+                "תיקיות",
+                "ניהול תיקיות"));
 
-                case 3:
-                    // תיקיות
-                    break;
+        items.add(new SettingItem(
+                "מקשים",
+                "מקשי חומרה"));
 
-                case 4:
-                    // מקשים
-                    break;
+        items.add(new SettingItem(
+                "עכבר",
+                "מצב עכבר"));
 
-                case 5:
-                    // עכבר
-                    break;
+        items.add(new SettingItem(
+                "גיבוי ושחזור",
+                "שמירת ההגדרות"));
 
-                case 6:
-                    // גיבוי
-                    break;
+        items.add(new SettingItem(
+                "אודות",
+                "מידע על הלאנצ'ר"));
 
-                case 7:
-                    // אודות
-                    break;
+    }
 
-            }
-
-        });
-
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 
 }
