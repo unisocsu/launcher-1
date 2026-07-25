@@ -1,147 +1,259 @@
 package com.example.keylauncher;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
-public class DesktopSerializer {
+/**
+ * מנהל את פריסת מסך הבית.
+ *
+ * אחראי על:
+ * - מיקום פריטים
+ * - החלפת מיקומים
+ * - מציאת תא פנוי
+ * - שמירה וטעינה
+ */
+public class DesktopLayoutManager {
 
-    public String serialize(List<LauncherItem> items) {
+    private final SettingsManager settings;
+    private final DesktopSerializer serializer;
 
-        JSONArray array = new JSONArray();
+    private final List<LauncherItem> items =
+            new ArrayList<>();
 
-        try {
+    public DesktopLayoutManager(SettingsManager settings) {
 
-            for (LauncherItem item : items) {
+        this.settings = settings;
 
-                JSONObject object = new JSONObject();
-
-                object.put("id", item.getId());
-                object.put("type", item.getType());
-
-                object.put("title", item.getTitle());
-
-                object.put("packageName",
-                        item.getPackageName());
-
-                object.put("className",
-                        item.getClassName());
-
-                object.put("widgetId",
-                        item.getAppWidgetId());
-
-                object.put("cellX",
-                        item.getCellX());
-
-                object.put("cellY",
-                        item.getCellY());
-
-                object.put("spanX",
-                        item.getSpanX());
-
-                object.put("spanY",
-                        item.getSpanY());
-
-                object.put("hidden",
-                        item.isHidden());
-
-                object.put("movable",
-                        item.isMovable());
-
-                object.put("customData",
-                        item.getCustomData());
-
-                array.put(object);
-
-            }
-
-        } catch (JSONException e) {
-
-            e.printStackTrace();
-
-        }
-
-        return array.toString();
+        this.serializer =
+                new DesktopSerializer(
+                        settings.desktop);
 
     }
 
-    public List<LauncherItem> deserialize(String json) {
+    public List<LauncherItem> getItems() {
+        return items;
+    }
 
-        List<LauncherItem> items =
-                new ArrayList<>();
+    public void clear() {
+        items.clear();
+    }
 
-        if (json == null)
-            return items;
+    public void setItems(List<LauncherItem> list) {
 
-        if (json.trim().length() == 0)
-            return items;
+        items.clear();
 
-        try {
+        if (list != null) {
+            items.addAll(list);
+        }
 
-            JSONArray array =
-                    new JSONArray(json);
+        sort();
 
-            for (int i = 0; i < array.length(); i++) {
+    }
 
-                JSONObject object =
-                        array.getJSONObject(i);
+    public void addItem(LauncherItem item) {
 
-                LauncherItem item =
-                        new LauncherItem();
+        if (item == null)
+            return;
 
-                item.setId(
-                        object.optLong("id"));
+        items.add(item);
 
-                item.setType(
-                        object.optInt("type"));
+        sort();
 
-                item.setTitle(
-                        object.optString("title"));
+    }
 
-                item.setPackageName(
-                        object.optString("packageName"));
+    public void removeItem(LauncherItem item) {
 
-                item.setClassName(
-                        object.optString("className"));
+        items.remove(item);
 
-                item.setAppWidgetId(
-                        object.optInt("widgetId", -1));
+    }
 
-                item.setCellX(
-                        object.optInt("cellX"));
+    public LauncherItem findById(long id) {
 
-                item.setCellY(
-                        object.optInt("cellY"));
+        for (LauncherItem item : items) {
 
-                item.setSpanX(
-                        object.optInt("spanX", 1));
-
-                item.setSpanY(
-                        object.optInt("spanY", 1));
-
-                item.setHidden(
-                        object.optBoolean("hidden"));
-
-                item.setMovable(
-                        object.optBoolean("movable", true));
-
-                item.setCustomData(
-                        object.optString("customData"));
-
-                items.add(item);
-
-            }
-
-        } catch (JSONException e) {
-
-            e.printStackTrace();
+            if (item.getId() == id)
+                return item;
 
         }
 
-        return items;
+        return null;
+
+    }
+
+    public LauncherItem findItemAt(int cellX,
+                                   int cellY) {
+
+        for (LauncherItem item : items) {
+
+            if (item.getCellX() == cellX &&
+                    item.getCellY() == cellY) {
+
+                return item;
+
+            }
+
+        }
+
+        return null;
+
+    }
+
+    public boolean isCellOccupied(int cellX,
+                                  int cellY) {
+
+        return findItemAt(cellX, cellY) != null;
+
+    }
+
+    public boolean moveItem(LauncherItem item,
+                            int newCellX,
+                            int newCellY) {
+
+        if (item == null)
+            return false;
+
+        LauncherItem other =
+                findItemAt(newCellX,
+                        newCellY);
+
+        if (other == null) {
+
+            item.setCellX(newCellX);
+            item.setCellY(newCellY);
+
+            save();
+
+            return true;
+
+        }
+
+        int oldX = item.getCellX();
+        int oldY = item.getCellY();
+
+        other.setCellX(oldX);
+        other.setCellY(oldY);
+
+        item.setCellX(newCellX);
+        item.setCellY(newCellY);
+
+        save();
+
+        return true;
+
+    }
+
+    public int[] findFirstFreeCell(int columns) {
+
+        if (columns < 1)
+            columns = 4;
+
+        int row = 0;
+
+        while (true) {
+
+            for (int col = 0; col < columns; col++) {
+
+                if (!isCellOccupied(col, row)) {
+
+                    return new int[]{
+                            col,
+                            row
+                    };
+
+                }
+
+            }
+
+            row++;
+
+        }
+
+    }
+
+    public void normalize(int columns) {
+
+        if (columns < 1)
+            columns = 4;
+
+        sort();
+
+        int x = 0;
+        int y = 0;
+
+        for (LauncherItem item : items) {
+
+            item.setCellX(x);
+            item.setCellY(y);
+
+            x++;
+
+            if (x >= columns) {
+
+                x = 0;
+                y++;
+
+            }
+
+        }
+
+        save();
+
+    }
+
+    public void sort() {
+
+        Collections.sort(items,
+                new Comparator<LauncherItem>() {
+
+                    @Override
+                    public int compare(LauncherItem a,
+                                       LauncherItem b) {
+
+                        if (a.getCellY() != b.getCellY()) {
+
+                            return a.getCellY()
+                                    - b.getCellY();
+
+                        }
+
+                        return a.getCellX()
+                                - b.getCellX();
+
+                    }
+
+                });
+
+    }
+
+    public void save() {
+
+        serializer.save(items);
+
+    }
+
+    public void load() {
+
+        items.clear();
+
+        items.addAll(serializer.load());
+
+        sort();
+
+    }
+
+    public void reset() {
+
+        items.clear();
+
+        serializer.clear();
+
+    }
+
+    public int size() {
+
+        return items.size();
 
     }
 
