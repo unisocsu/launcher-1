@@ -1,81 +1,27 @@
-package com.example.keylauncher;
+private final DesktopSerializer serializer =
+        new DesktopSerializer();
 
-import java.util.ArrayList;
-import java.util.List;
+public void save() {
 
-public class DesktopLayoutManager {
+    String json =
+            serializer.serialize(desktopItems);
 
-    private final SettingsManager settings;
+    settings.desktop.setLayout(json);
 
-    private final List<LauncherItem> desktopItems =
-            new ArrayList<>();
+}
 
-    public DesktopLayoutManager(SettingsManager settings) {
+public void load() {
 
-        this.settings = settings;
+    desktopItems.clear();
 
-    }
+    desktopItems.addAll(
 
-    public void setItems(List<LauncherItem> items) {
+            serializer.deserialize(
 
-        desktopItems.clear();
+                    settings.desktop.getLayout()
 
-        if (items != null) {
-            desktopItems.addAll(items);
-        }
+            )
 
-    }
-
-    public List<LauncherItem> getItems() {
-        return desktopItems;
-    }
-
-    public void moveItem(LauncherItem source,
-                         int newCellX,
-                         int newCellY) {
-
-        for (LauncherItem item : desktopItems) {
-
-            if (item == source)
-                continue;
-
-            if (item.getCellX() == newCellX &&
-                    item.getCellY() == newCellY) {
-
-                int oldX = source.getCellX();
-                int oldY = source.getCellY();
-
-                source.setCellX(newCellX);
-                source.setCellY(newCellY);
-
-                item.setCellX(oldX);
-                item.setCellY(oldY);
-
-                save();
-
-                return;
-
-            }
-
-        }
-
-        source.setCellX(newCellX);
-        source.setCellY(newCellY);
-
-        save();
-
-    }
-
-    public void save() {
-
-        /*
-         * כאן בהמשך נבנה DesktopSerializer
-         * שיהפוך את desktopItems ל-JSON
-         * וישמור דרך:
-         *
-         * settings.desktop.setLayout(json);
-         */
-
-    }
+    );
 
 }
